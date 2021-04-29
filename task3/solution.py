@@ -3,19 +3,19 @@ import yaml
 from abc import ABC
 
 
-Levels = yaml.load(
-'''
-levels:
-    - !easy_level {}
-    - !medium_level
-        enemy: ['rat']
-    - !hard_level
-        enemy:
-            - rat
-            - snake
-            - dragon
-        enemy_count: 10
-''')
+# Levels = yaml.load(
+# '''
+# levels:
+#     - !easy_level {}
+#     - !medium_level
+#         enemy: ['rat']
+#     - !hard_level
+#         enemy:
+#             - rat
+#             - snake
+#             - dragon
+#         enemy_count: 10
+# ''')
 
 
 class AbstractLevel(yaml.YAMLObject):
@@ -36,6 +36,54 @@ class AbstractLevel(yaml.YAMLObject):
 
 
 class EasyLevel(AbstractLevel):
+    yaml_tag = u'!easy_level'
+
+    @classmethod
+    def from_yaml(Class, loader, node):
+        # def get_levels(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     rep = Class.make_report(data["title"])
+        #     rep.filename = data["filename"]
+        #     # на данный момент data["parts"] пуст. Он будет заполнен позже, соответствующим обработчиком,
+        #     # сохраняем на него ссылку, дополнив сразу частями из rep.parts
+        #     data["parts"].extend(rep.parts)
+        #     rep.parts = data["parts"]
+        #     return rep
+
+        #
+        # # обработчик создания части !chapter
+        # def get_chapter(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     ch = Class.make_chapter(data["caption"])
+        #     # аналогично предыдущему обработчику
+        #     data["parts"].extend(ch.objects)
+        #     ch.objects = data["parts"]
+        #     return ch
+        #
+        # # обработчик создания ссылки !link
+        # def get_link(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     lnk = Class.make_link(data["obj"], data["href"])
+        #     return lnk
+        #
+        # # обработчик создания изображения !img
+        # def get_img(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     img = Class.make_img(data["alt_text"], data["src"])
+        #     return img
+
+        # добавляем обработчики
+        # loader.add_constructor(u"!easy_level", get_report)
+        # loader.add_constructor(u"!chapter", get_chapter)
+        # loader.add_constructor(u"!link", get_link)
+        # loader.add_constructor(u"!img", get_img)
+
+        # возвращаем результат yaml обработчика - отчёт
+        data = loader.construct_mapping(node)
+        data['map'] = Class.get_map()
+        data['obj'] = Class.get_objects()
+        return data
+
     class Map:
         def __init__(self):
             self.Map = [[0 for _ in range(5)] for _ in range(5)]
@@ -71,6 +119,60 @@ class EasyLevel(AbstractLevel):
 
 
 class MediumLevel(AbstractLevel):
+    yaml_tag = u'!medium_level'
+
+    @classmethod
+    def from_yaml(Class, loader, node):
+        # def get_enemy(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     data['obj'] = Class.get_objects()
+        #     rep = Class.make_report(data["title"])
+        #     rep.filename = data["filename"]
+        #     # на данный момент data["parts"] пуст. Он будет заполнен позже, соответствующим обработчиком,
+        #     # сохраняем на него ссылку, дополнив сразу частями из rep.parts
+        #     data["parts"].extend(rep.parts)
+        #     rep.parts = data["parts"]
+        #     return rep
+
+        #
+        # # обработчик создания части !chapter
+        # def get_chapter(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     ch = Class.make_chapter(data["caption"])
+        #     # аналогично предыдущему обработчику
+        #     data["parts"].extend(ch.objects)
+        #     ch.objects = data["parts"]
+        #     return ch
+        #
+        # # обработчик создания ссылки !link
+        # def get_link(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     lnk = Class.make_link(data["obj"], data["href"])
+        #     return lnk
+        #
+        # # обработчик создания изображения !img
+        # def get_img(loader, node):
+        #     data = loader.construct_mapping(node)
+        #     img = Class.make_img(data["alt_text"], data["src"])
+        #     return img
+
+        # добавляем обработчики
+        #loader.add_constructor(u"enemy", get_enemy)
+        # loader.add_constructor(u"!chapter", get_chapter)
+        # loader.add_constructor(u"!link", get_link)
+        # loader.add_constructor(u"!img", get_img)
+
+        # возвращаем результат yaml обработчика - отчёт
+        data = loader.construct_mapping(node)
+        data['map'] = Class.get_map()
+        _obj = Class.get_objects()
+        #_obj.config['enemy'].extend(data['enemy'])
+
+        data['obj'] = _obj
+        data['obj'].config['enemy'].extend(_obj.config['enemy'])
+        _obj.config['enemy'] = data['enemy']
+        return data
+
     class Map:
         def __init__(self):
             self.Map = [[0 for _ in range(8)] for _ in range(8)]
@@ -144,6 +246,16 @@ class HardLevel(AbstractLevel):
 
             return self.objects
 
+
+Levels = '''
+levels:
+    - !easy_level {}
+    - !medium_level
+         enemy: ['rat']
+'''
+levels_result = yaml.load(Levels)
+print(levels_result)
+
 Levels = {'levels':[]}
 _map = EasyLevel.Map()
 _obj = EasyLevel.Objects()
@@ -154,7 +266,9 @@ _obj = MediumLevel.Objects()
 _obj.config = {'enemy':['rat']}
 Levels['levels'].append({'map': _map, 'obj': _obj})
 
-_map = HardLevel.Map()
-_obj = HardLevel.Objects()
-_obj.config = {'enemy': ['rat', 'snake', 'dragon'], 'enemy_count': 10}
-Levels['levels'].append({'map': _map, 'obj': _obj})
+print(Levels)
+#
+# _map = HardLevel.Map()
+# _obj = HardLevel.Objects()
+# _obj.config = {'enemy': ['rat', 'snake', 'dragon'], 'enemy_count': 10}
+# Levels['levels'].append({'map': _map, 'obj': _obj})
